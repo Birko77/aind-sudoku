@@ -5,13 +5,40 @@ from utils import *
 row_units = [cross(r, cols) for r in rows]
 column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
-unitlist = row_units + column_units + square_units
+diagonal_units = [[rows[index]+cols[index] for index in range(len(rows))], [rows[index]+cols[len(rows)-1-index] for index in range(len(rows))]]
+
+unitlist = row_units + column_units + square_units + diagonal_units
 
 # TODO: Update the unit list to add the new diagonal units
 unitlist = unitlist
 
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+
+
+def find_naked_twins(values, unit):
+    candidates = []
+    n_twins = []
+    for box in unit:
+        if len(values[box]) == 2:
+            if values[box] in candidates:
+                n_twins.append(values[box])
+                candidates.remove(values[box])
+            else:
+                candidates.append(values[box])
+    return n_twins
+
+
+def naked_twins_eliminate(values, unit, n_twins):
+    # print('Values before: ' + str(values))
+    digits_to_eliminate = ''.join(n_twins)
+    # print('Digits to eliminate: '+digits_to_eliminate)
+    for box in unit:
+        if values[box] not in n_twins:  # don't change the naked twins
+            for digit in digits_to_eliminate:
+                values[box] = values[box].replace(digit, '')
+    # print('Values after: '+ str(values))
+    return values
 
 
 def naked_twins(values):
@@ -42,7 +69,12 @@ def naked_twins(values):
     strategy repeatedly).
     """
     # TODO: Implement this function!
-    raise NotImplementedError
+    # raise NotImplementedError
+
+    for unit in unitlist:
+        n_twins = find_naked_twins(values, unit)
+        values = naked_twins_eliminate(values, unit, n_twins)
+    return values
 
 
 def eliminate(values):
@@ -62,7 +94,19 @@ def eliminate(values):
         The values dictionary with the assigned values eliminated from peers
     """
     # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    # raise NotImplementedError
+
+    for box_name in values:
+        if len(values[box_name])==1:
+            peers_of_box = peers[box_name]
+            # print('Box: '+box_name+' Value: '+values[box_name])
+            # print(peers_of_box)
+            for peer_box_name in peers_of_box:
+                old_string = values[peer_box_name]
+                new_string = old_string.replace(values[box_name], "")
+                values[peer_box_name] = new_string
+
+    return values
 
 
 def only_choice(values):
@@ -86,7 +130,20 @@ def only_choice(values):
     You should be able to complete this function by copying your code from the classroom
     """
     # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    # raise NotImplementedError
+
+    for unit in unitlist:
+        for digit in "123456789":
+            digit_count = 0
+            box_last_seen = ''
+            for box in unit:
+                if digit in values[box]:
+                    digit_count = digit_count + 1
+                    box_last_seen = box
+            if digit_count == 1:
+                values[box_last_seen] = digit
+
+    return values
 
 
 def reduce_puzzle(values):
@@ -104,7 +161,29 @@ def reduce_puzzle(values):
         no longer produces any changes, or False if the puzzle is unsolvable 
     """
     # TODO: Copy your code from the classroom and modify it to complete this function
-    raise NotImplementedError
+    # raise NotImplementedError
+
+    stalled = False
+    while not stalled:
+        # Check how many boxes have a determined value
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # Your code here: Use the Eliminate Strategy
+        values = eliminate(values)
+
+        # Your code here: Use the Only Choice Strategy
+        values = only_choice(values)
+
+        values = naked_twins(values)
+
+        # Check how many boxes have a determined value, to compare
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+        # If no new values were added, stop the loop.
+        stalled = solved_values_before == solved_values_after
+        # Sanity check, return False if there is a box with zero available values:
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+    return values
 
 
 def search(values):
@@ -127,7 +206,33 @@ def search(values):
     and extending it to call the naked twins strategy.
     """
     # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    # raise NotImplementedError
+
+    # First, reduce the puzzle using the previous function
+    values = reduce_puzzle(values)
+    if values == False:
+        return False
+    elif len([box for box in values.keys() if len(values[box]) == 1]) == 81:
+        return values
+    # Choose one of the unfilled squares with the fewest possibilities
+    least_digits_box = ''
+    for box in values:
+        if len(values[box])==1:
+            continue
+        if len(values[box])==2:
+            least_digits_box=box
+            break
+        if least_digits_box=='':
+            least_digits_box=box
+            continue
+        if len(values[box])<len(values[least_digits_box]):
+            least_digits_box=box
+    for digit in values[least_digits_box]:
+        new_sudoku = values.copy()
+        new_sudoku[least_digits_box] = digit
+        attempt = search(new_sudoku)
+        if attempt:
+            return attempt
 
 
 def solve(grid):

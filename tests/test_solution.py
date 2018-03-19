@@ -5,7 +5,7 @@ own additional test cases to cover any failed tests shown in the Project Assista
 """
 import unittest
 import solution
-
+from utils import *
 
 class TestNakedTwins(unittest.TestCase):
     before_naked_twins_1 = {'I6': '4', 'H9': '3', 'I2': '6', 'E8': '1', 'H3': '5', 'H7': '8', 'I7': '1', 'I4': '8',
@@ -80,6 +80,38 @@ class TestNakedTwins(unittest.TestCase):
         self.assertTrue(solution.naked_twins(self.before_naked_twins_2) in self.possible_solutions_2,
                         "Your naked_twins function produced an unexpected board.")
 
+
+class TestFindNakedTwins(unittest.TestCase):
+    test_values1 = {'I6': '43', 'H9': '43', 'I2': '67', 'E8': '67', 'A1': '12', 'B1': '12'}
+    test_unit1 = ['I6', 'H9', 'I2', 'E8']
+
+    test_values2 = {'I6': '433', 'H9': '433', 'I2': '637', 'E8': '637', 'A1': '12', 'B1': '12'}
+    test_unit2 = ['I6', 'H9', 'I2', 'E8']
+
+    def test_find_naked_twins1(self):
+        self.assertTrue(solution.find_naked_twins(self.test_values1, self.test_unit1) == ['43', '67'])
+
+    def test_find_naked_twins2(self):
+        self.assertTrue(solution.find_naked_twins(self.test_values2, self.test_unit2) == [])
+
+
+class TestNakedTwinsEliminate(unittest.TestCase):
+    test_values1 = {'I6': '43', 'H9': '43', 'I2': '1234', 'E8': '3456', 'A1': '1234', 'B1': '1234'}
+    test_unit1 = ['I6', 'H9', 'I2', 'E8']
+    test_naked_twins1 = ['43']
+    exp_values1 = {'I6': '43', 'H9': '43', 'I2': '12', 'E8': '56', 'A1': '1234', 'B1': '1234'}
+
+    test_values2 = {'I6': '43', 'H9': '43', 'I2': '78', 'E8': '78', 'A1': '123456789', 'B1': '123456789'}
+    test_unit2 = ['I6', 'H9', 'I2', 'E8', 'A1', 'B1']
+    test_naked_twins2 = ['43', '78']
+    exp_values2 = {'I6': '43', 'H9': '43', 'I2': '78', 'E8': '78', 'A1': '12569', 'B1': '12569'}
+
+    def test_naked_twins_eliminate1(self):
+        # print(solution.naked_twins_eliminate(self.test_values1, self.test_unit1, self.test_naked_twins1))
+        self.assertTrue(solution.naked_twins_eliminate(self.test_values1, self.test_unit1, self.test_naked_twins1) == self.exp_values1)
+
+    def test_naked_twins_eliminate2(self):
+        self.assertTrue(solution.naked_twins_eliminate(self.test_values2, self.test_unit2, self.test_naked_twins2) == self.exp_values2)
 
 
 class TestDiagonalSudoku(unittest.TestCase):
